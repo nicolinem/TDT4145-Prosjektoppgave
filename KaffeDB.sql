@@ -6,8 +6,7 @@ CREATE TABLE Bruker (
     CONSTRAINT Bruker_PK PRIMARY KEY (BrukerID));
 
 CREATE TABLE Kaffebrenneri (
-    BrenneriID  INTEGER NOT NULL,
-    Navn        VARCHAR(30) NOT NULL,
+    BrenneriNavn VARCHAR(30) NOT NULL,
     CONSTRAINT Kaffebrenneri_PK PRIMARY KEY (BrenneriID));
 
 CREATE TABLE Kaffegård(
@@ -42,7 +41,7 @@ CREATE TABLE  Kaffeparti (
 
 
 CREATE TABLE Kaffe (
-  KaffeID       INTEGER NOT NULL,
+  KaffeNavn     VARCHAR(30) NOT NULL,
   Navn          VARCHAR(30) NOT NULL,
   Beskrivelse   VARCHAR(100),
   Brenningsgrad VARCHAR(10) CHECK (Brenningsgrad = 'lys' OR Brenningsgrad = 'middels' OR Brenningsgrad = 'mørk'),
@@ -50,8 +49,8 @@ CREATE TABLE Kaffe (
   Kilopris      INTEGER NOT NULL,
   BrenneriID    INTEGER NOT NULL,
   PartiID       INTEGER NOT NULL,
-  CONSTRAINT Kaffe_PK PRIMARY KEY (KaffeID),
-  CONSTRAINT Kaffe_FK1 FOREIGN KEY (BrenneriID) REFERENCES Kaffebrenneri(BrenneriID)
+  CONSTRAINT Kaffe_PK PRIMARY KEY (KaffeNavn, BrenneriNavn),
+  CONSTRAINT Kaffe_FK1 FOREIGN KEY (BrenneriID) REFERENCES Kaffebrenneri(BrenneriNavn)
     ON UPDATE CASCADE
     ON DELETE CASCADE,
   CONSTRAINT Kaffe_FK2 FOREIGN KEY (PartiID) REFERENCES Kaffeparti(PartiID)
@@ -61,15 +60,15 @@ CREATE TABLE Kaffe (
 CREATE TABLE Kaffesmaking (
   SmakID      INTEGER NOT NULL,
   BrukerID    INTEGER NOT NULL,
-  KaffeID     INTEGER NOT NULL,
+  KaffeNavn   VARCHAR(30) NOT NULL,
   Beskrivelse VARCHAR(100),
   Poeng INTEGER CHECK (Poeng >= 0 AND Poeng <= 10),
   Dato DATE NOT NULL,
-  CONSTRAINT Kaffesmaking_PK PRIMARY KEY (SmakID, BrukerID, KaffeID),
+  CONSTRAINT Kaffesmaking_PK PRIMARY KEY (SmakID, BrukerID),
   CONSTRAINT Kaffesmaking_FK1 FOREIGN KEY (BrukerID) REFERENCES Bruker(BrukerID)
     ON UPDATE CASCADE
     ON DELETE CASCADE,
-  CONSTRAINT Kaffesmaking_FK2 FOREIGN KEY (KaffeID) REFERENCES Kaffe(KaffeID)
+  CONSTRAINT Kaffesmaking_FK2 FOREIGN KEY (KaffeNavn) REFERENCES Kaffe(KaffeNavn)
     ON UPDATE CASCADE
     ON DELETE CASCADE
 );
