@@ -52,7 +52,7 @@ CREATE TABLE Kaffe (
   FOREIGN KEY (BrenneriNavn) REFERENCES Kaffebrenneri(BrenneriNavn)
     ON UPDATE CASCADE
     ON DELETE CASCADE,
-  FOREIGN KEY (PartiID) REFERENCES Kaffeparti(PartiID)
+  FOREIGN KEY (PartiID) REFERENCES Kaffebrenneri(BrenneriNavn)
     ON UPDATE CASCADE
     ON DELETE CASCADE);
 
@@ -61,13 +61,14 @@ CREATE TABLE Kaffesmaking (
   BrukerID    INTEGER NOT NULL,
   Beskrivelse VARCHAR(100),
   Poeng INTEGER CHECK (Poeng >= 0 AND Poeng <= 10),
-  KaffeNavn   VARCHAR(30) NOT NULL,
-  Dato DATE DEFAULT (DATETIME('now')),
-  PRIMARY KEY (SmakID, BrukerID),
+  KaffeNavn   VARCHAR(30) NOT NULL, 
+  BrenneriNavn VARCHAR(30) NOT NULL,
+  Dato TEXT DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (SmakID),
   FOREIGN KEY (BrukerID) REFERENCES Bruker(BrukerID)
     ON UPDATE CASCADE
     ON DELETE CASCADE,
-  FOREIGN KEY (KaffeNavn) REFERENCES Kaffe(KaffeNavn)
+  FOREIGN KEY (KaffeNavn, BrenneriNavn) REFERENCES Kaffe(KaffeNavn, BrenneriNavn)
     ON UPDATE CASCADE
     ON DELETE CASCADE
   );
