@@ -1,4 +1,5 @@
 import sqlite3
+from tabulate import tabulate
 con = sqlite3.connect("Kaffe.db")
 cursor = con.cursor()
 # Bruker
@@ -120,27 +121,21 @@ def getCoffeInformation(kaffenavn, brennerinavn):
     # finner kaffe på kaffenavn og brennerinav som bruker putter inn
     cursor.execute(
         'SELECT * FROM Kaffe WHERE KaffeNavn =? AND BrenneriNavn =?', (kaffenavn, brennerinavn))
-    kaffe = cursor.fetch()
-    kaffeBeskrivelse = kaffe[2]
-    brentGrad = kaffe[3]
-    kiloprisKaffe = kaffe[5]
-    kaffepartiID = kaffe[6]
+    kaffe = cursor.fetchone()
+    kaffeBeskrivelse, brentGrad, kiloprisKaffe, kaffepartiID = [
+        kaffe[i] for i in (2, 3, 5, 6)]
 
     # finner kaffeparti fra PartiID i kaffen vi fant
     cursor.execute('SELECT * FROM Kaffeparti WHERE PartiID= ?',
                    (kaffepartiID,))
-    kaffeparti = cursor.fetch()
-    innhøstingår = kaffeparti[1]
-    partiKgPris = kaffeparti[2]
-    gårdID = kaffeparti[3]
+    kaffeparti = cursor.fetchone()
+    innhøstingår, partiKgPris, gårdID = [kaffeparti[i] for i in (1, 2, 3)]
 
     cursor.execute(
         'SELECT gårdID, Navn, Region, Land, ifnull(Moh, "") FROM Kaffegård WHERE GårdID = ?', (gårdID,))
-    kaffegård = cursor.fetch()
-    gårdsNavn = kaffegård[1]
-    gårdsLand = kaffegård[2]
-    gårdsRegion = kaffegård[3]
-    moh = kaffegård[4]
+    kaffegård = cursor.fetchone()
+    gårdsNavn, gårdsLand, gårdsRegion, moh = [
+        kaffegård[i] for i in (1, 2, 3, 4)]
 
     returnString = (
         f'Kaffen er  {brentGrad}brent, kommer fra gården {gårdsNavn}')
@@ -153,34 +148,65 @@ def getCoffeInformation(kaffenavn, brennerinavn):
 
     print(returnString)
     print()
-    # print(kaffeparti)
-    # print(kaffe)
-    # print(f'Kaffen er  {brentGrad}brent, kommer fra gården {gårdsNavn} ({moh} moh) i  {gårdsLand}, {gårdsRegion}, har en kilopris på {kiloprisKaffe} kr og er i følge brenneriet "{kaffeBeskrivelse}"')
-    # print(
-    #     f"Kaffen ble høstet i {innhøstingår} og gården fikk utbetalt {partiKgPris} USD per kg kaffe.")
+
+
+def getMostCoffeDrinkingUsers():
+    cursor.execute('select Navn, count(*) as Kaffesmakinger  FROM(Select BrukerID, KaffeNavn, BrenneriNavn, Dato, Bruker.Navn as Navn FROM Kaffesmaking natural join Bruker) WHERE  strftime("%Y", Dato)="2022" GROUP BY BrukerID ORDER BY Kaffesmakinger DESC')
+    kaffesmakinger = cursor.fetchall()
+    print(tabulate(kaffesmakinger, headers=["Navn", "Antall", ]))
+
+
+def getCoffeeWithMostValue():
+    cursor.execute('SELECT  (avg(Poeng)/Kilopris), KaffeNavn, avg(Poeng), Kilopris FROM Kaffesmaking Kaffesmaking INNER JOIN Kaffe USING(KaffeNavn, BrenneriNavn) GROUP BY KaffeNavn, BrenneriNavn ORDER by (avg(Poeng)/Kilopris) DESC')
+    kaffer = cursor.fetchall()
+    print(tabulate(kaffer, headers=[
+          "Avg score", "Kaffenavn", "Avg score", "Kilopris"]))
 
 
 def getCoffeeDescription(beskrivelse):
-    cursor.execute('Select Kaffe.KaffeNavn, BrenneriNavn from Kaffesmaking inner join Kaffe on Kaffesmaking.KaffeNavn = Kaffe.KaffeNavn where Kaffesmaking.Beskrivelse like %?% UNION select KaffeNavn, BrenneriNavn from Kaffe where Beskrivelse like %?%', (beskrivelse,))
+    cursor.execute('SELECT Kaffe.KaffeNavn, Kaffe.BrenneriNavn from Kaffesmaking INNER JOIN Kaffe ON Kaffesmaking.KaffeNavn = Kaffe.KaffeNavn WHERE Kaffesmaking.Beskrivelse LIKE ? UNION SELECT KaffeNavn, BrenneriNavn from Kaffe where Beskrivelse like ?', (str(
+        '%'+beskrivelse+'%'), str('%'+beskrivelse+'%')))
+    kaffer = cursor.fetchall()
+    for k in kaffer:
+        print(k)
+
+
+# def getCoffeByCountryAndProcess():
+# cursor.execute()
 
 
 def main():
+    print("""Velkommen til Kaffe.db! Hva ønsker du å gjøre?")
+    1 | Opprette en ny kaffesmaking
+    2 | Se hvem som har smakt flest unike kaffer i år
+    3 | Se hvilke kaffer som gir mest for pengene
+    4 | Søke etter et nøkkelord i beskrivelsen av en kaffe
+    5 | Finne kaffer fra Rwanda og Columbia som ikke er vasket
+    6 | Avslutte programmet\n""")
     while (True):
-        print("Hei! Hva ønsker du å gjøre?")
-        print('"1" for å legge til en ny kaffesmaking')
-        print('"2" for å søke etter en kaffe')
-        print('3 for å fe en ')
-        print('"4", for å søke etter nøkkelord i en beskrivelse av en kaffe')
-        inputChoice = input("Hva velger du? ")
+        inputChoice = input("Skriv inn tall: ")
         if (inputChoice == "1"):
             kaffenavn = input("Hvilken kaffe har du smakt? ")
             brennerinavn = input("Fra hvilket brenneri? ")
             score = int(input("Hvilken score vil du gi kaffen? "))
             beskrivelse = input("Hvordan vil du beskrive kaffen? ")
             nyKaffeSmaking(kaffenavn, brennerinavn, score, beskrivelse)
+
+        if(inputChoice == "2"):
+            print("Brukere som har smakt flest unike kaffer i år:")
+            getMostCoffeDrinkingUsers()
+
+        if (inputChoice == "3"):
+            print("Kaffer med høyest gjennomsnittlig score kontra pris:")
+            getCoffeeWithMostValue()
+
         if (inputChoice == "4"):
-            beskrivelse = input("Skriv inn et nøkkelord å søke etter")
+            beskrivelse = input("Skriv inn et nøkkelord å søke etter: ")
             getCoffeeDescription(beskrivelse)
+
+        if (inputChoice == "6"):
+            print("Avslutter programmet.\n\n")
+            break
 
     con.close()
 
