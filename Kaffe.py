@@ -164,7 +164,7 @@ def getCoffeeWithMostValue():
 
 
 def getCoffeeDescription(beskrivelse):
-    cursor.execute('SELECT Kaffe.KaffeNavn, Kaffe.BrenneriNavn FROM Kaffesmaking INNER JOIN Kaffe ON Kaffesmaking.KaffeNavn = Kaffe.KaffeNavn WHERE Kaffesmaking.Beskrivelse LIKE ? UNION SELECT KaffeNavn, BrenneriNavn FROM Kaffe WHERE Beskrivelse LIKE ?', (str(
+    cursor.execute('SELECT Kaffe.KaffeNavn, Kaffe.BrenneriNavn FROM Kaffesmaking INNER JOIN Kaffe USING (KaffeNavn, BrenneriNavn) WHERE Kaffesmaking.Beskrivelse LIKE ? UNION SELECT KaffeNavn, BrenneriNavn FROM Kaffe WHERE Beskrivelse LIKE ?', (str(
         '%'+beskrivelse+'%'), str('%'+beskrivelse+'%')))
     kaffer = cursor.fetchall()
     for k in kaffer:
@@ -180,7 +180,7 @@ def getCoffeByCountryAndProcess():
 
 def main():
     print("""Velkommen til Kaffe.db! Hva ønsker du å gjøre?")
-    1 | Opprette en ny kaffesmaking
+    1 | Opprette en ny kaffesmaking og få informasjon om denne kaffen
     2 | Se hvem som har smakt flest unike kaffer i år
     3 | Se hvilke kaffer som gir mest for pengene
     4 | Søke etter et nøkkelord i beskrivelsen av en kaffe
