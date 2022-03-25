@@ -151,28 +151,31 @@ def getCoffeInformation(kaffenavn, brennerinavn):
 
 
 def getMostCoffeDrinkingUsers():
-    cursor.execute('select Navn, count(*) as Kaffesmakinger  FROM(Select BrukerID, KaffeNavn, BrenneriNavn, Dato, Bruker.Navn as Navn FROM Kaffesmaking natural join Bruker) WHERE  strftime("%Y", Dato)="2022" GROUP BY BrukerID ORDER BY Kaffesmakinger DESC')
+    cursor.execute('SELECT Navn, COUNT(*) AS Kaffesmakinger FROM(SELECT BrukerID, KaffeNavn, BrenneriNavn, Dato, Bruker.Navn AS Navn FROM Kaffesmaking NATURAL JOIN Bruker) WHERE strftime("%Y", Dato)="2022" GROUP BY BrukerID ORDER BY Kaffesmakinger DESC')
     kaffesmakinger = cursor.fetchall()
     print(tabulate(kaffesmakinger, headers=["Navn", "Antall", ]))
 
 
 def getCoffeeWithMostValue():
-    cursor.execute('SELECT  (avg(Poeng)/Kilopris), KaffeNavn, avg(Poeng), Kilopris FROM Kaffesmaking Kaffesmaking INNER JOIN Kaffe USING(KaffeNavn, BrenneriNavn) GROUP BY KaffeNavn, BrenneriNavn ORDER by (avg(Poeng)/Kilopris) DESC')
+    cursor.execute('SELECT  (AVG(Poeng)/Kilopris), KaffeNavn, AVG(Poeng), Kilopris FROM Kaffesmaking Kaffesmaking INNER JOIN Kaffe USING(KaffeNavn, BrenneriNavn) GROUP BY KaffeNavn, BrenneriNavn ORDER BY (avg(Poeng)/Kilopris) DESC')
     kaffer = cursor.fetchall()
     print(tabulate(kaffer, headers=[
           "Avg score", "Kaffenavn", "Avg score", "Kilopris"]))
 
 
 def getCoffeeDescription(beskrivelse):
-    cursor.execute('SELECT Kaffe.KaffeNavn, Kaffe.BrenneriNavn from Kaffesmaking INNER JOIN Kaffe ON Kaffesmaking.KaffeNavn = Kaffe.KaffeNavn WHERE Kaffesmaking.Beskrivelse LIKE ? UNION SELECT KaffeNavn, BrenneriNavn from Kaffe where Beskrivelse like ?', (str(
+    cursor.execute('SELECT Kaffe.KaffeNavn, Kaffe.BrenneriNavn FROM Kaffesmaking INNER JOIN Kaffe ON Kaffesmaking.KaffeNavn = Kaffe.KaffeNavn WHERE Kaffesmaking.Beskrivelse LIKE ? UNION SELECT KaffeNavn, BrenneriNavn FROM Kaffe WHERE Beskrivelse LIKE ?', (str(
         '%'+beskrivelse+'%'), str('%'+beskrivelse+'%')))
     kaffer = cursor.fetchall()
     for k in kaffer:
         print(k)
 
 
-# def getCoffeByCountryAndProcess():
-# cursor.execute()
+def getCoffeByCountryAndProcess():
+    cursor.execute('SELECT Kaffenavn, BrenneriNavn FROM (SELECT PartiID FROM Kaffeparti INNER JOIN (SELECT * FROM Kaffegård WHERE Land = "Rwanda" OR Land="Colombia") USING (GårdID) INTERSECT SELECT PartiID FROM Kaffeparti INNER JOIN (SELECT * FROM Foredlingsmetode  WHERE  NOT Navn="Vasket" ) USING (ForedlingID)) INNER JOIN Kaffe USING (PartiID)')
+    kaffer = cursor.fetchall()
+    for k in kaffer:
+        print(k)
 
 
 def main():
@@ -203,6 +206,10 @@ def main():
         if (inputChoice == "4"):
             beskrivelse = input("Skriv inn et nøkkelord å søke etter: ")
             getCoffeeDescription(beskrivelse)
+
+        if (inputChoice == "5"):
+            beskrivelse = input("Kaffer fra Rwanda og Columbia som ikke er vasket: ")
+            getCoffeByCountryAndProcess()
 
         if (inputChoice == "6"):
             print("Avslutter programmet.\n\n")
